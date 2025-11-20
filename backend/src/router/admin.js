@@ -2,7 +2,7 @@ const express = require("express");
 const authUser = require("../middleware/userAuth");
 const upload = require("../middleware/multer");
 const uploadOnCloudinary = require("../utils/cloudinary");
-const {signinAdmin, loginAdmin, restaurantRegister, addMenuItems, menuList, deleteMenuItem, updateMenuAvailability, getAllOrders}=require("../controller/adminController")
+const {signinAdmin, loginAdmin, restaurantRegister, addMenuItems, menuList, deleteMenuItem, updateMenuAvailability, getAllOrders, updateOrderStatus}=require("../controller/adminController")
 
 
 const adminRouter = express.Router();
@@ -42,5 +42,7 @@ adminRouter.patch("/menu-item/:adminId/:menuId/availability", authUser, updateMe
 
 adminRouter.get("/orders/:restaurantId", getAllOrders);
 // adminRouter.get("/orders/:restaurantId", authUser, getAllOrders);
+
+adminRouter.put("/orders/update-status", updateOrderStatus);
 
 module.exports= adminRouter;

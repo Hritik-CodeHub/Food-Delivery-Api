@@ -377,7 +377,7 @@ const placeOrder = async (req, res) => {
       const price = menuItem.price;
       const quantity = item.quantity > 0 ? item.quantity : 1;
       const offer = menuItem.offer / 100;
-      const subtotal = (price * quantity) * offer;
+      const subtotal = (price * quantity) - offer;
 
       totalAmount += subtotal;
 

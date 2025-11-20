@@ -29,7 +29,10 @@ const menuSchema = mongoose.Schema({
     },
     rating:{type:Number
     },
-    restaurant:{type:mongoose.Schema.Types.ObjectId, ref:'Restaurant'}
+    restaurant:{
+        type:mongoose.Schema.Types.ObjectId, ref:'Restaurant',
+        required:true
+    }
     },
     {
         timestamps: true

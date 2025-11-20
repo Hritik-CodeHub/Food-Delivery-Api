@@ -83,6 +83,7 @@ const loginAdmin = async (req, res) => {
           _id:userExist._id, 
           name:userExist.name,
           restaurantExists,
+          restaurantId:restaurant._id,
           authToken,
         });
       } else {
@@ -166,7 +167,7 @@ const addMenuItems = async (req, res) => {
   try {
     const { adminId } = req.params;
     const menu = req.body;
-
+    console.log(menu)
     // validation
     if (!adminId || !menu) {
       return res.status(400).json({
@@ -355,7 +356,7 @@ const updateMenuAvailability = async (req, res) => {
 const getAllOrders = async (req, res) => {
   try {
     const { restaurantId } = req.params;
-    
+
     if (!restaurantId) {
       return res.status(400).json({
         success: false,
@@ -363,19 +364,20 @@ const getAllOrders = async (req, res) => {
       });
     }
 
-    // Fetch orders for the restaurant
-    const orders = await Order.find({ restaurant: restaurantId })
-      .sort({ createdAt: -1 }); // Latest orders first
+    // Fetch orders for the restaurant (latest first)
+    const orders = await Order.find({ restaurant: restaurantId }).sort({ createdAt: -1 });
 
-    if (!orders || orders.length === 0) {
+    if (!orders.length) {
       return res.status(200).json({
         success: true,
         message: "No orders found",
         data: []
       });
     }
+    
+    console.log(orders)
 
-    // Format orders with requested fields
+    // Format response data
     const formattedOrders = orders.map(order => ({
       orderId: order._id,
       customer: order.name,
@@ -384,15 +386,21 @@ const getAllOrders = async (req, res) => {
         quantity: item.quantity,
         price: item.price
       })),
-      totalItems:order.cartItems.length,
-      method:item.paymentMethod,
+      totalItems: order.cartItems.length,
+      method: order.paymentMethod,
       amount: order.totalAmount,
       status: order.status,
-      eta: order.status === "delivered" ? "Delivered" : 
-           order.status === "outfordelivery" ? "30-45 mins" :
-           order.status === "preparing" ? "20-30 mins" :
-           order.status === "confirmed" ? "15-25 mins" : "Pending",
-           placedAt: order.createdAt
+      eta:
+        order.status === "delivered"
+          ? "Delivered"
+          : order.status === "outfordelivery"
+          ? "30-45 mins"
+          : order.status === "preparing"
+          ? "20-30 mins"
+          : order.status === "confirmed"
+          ? "15-25 mins"
+          : "Pending",
+      placedAt: order.createdAt
     }));
 
     return res.status(200).json({
@@ -409,7 +417,46 @@ const getAllOrders = async (req, res) => {
       message: "Server error while fetching orders"
     });
   }
-}
+};
+
+const updateOrderStatus = async (req, res) => {
+  try {
+    const { orderId, status } = req.body;
+
+    if (!orderId || !status) {
+      return res.status(400).json({
+        success: false,
+        message: "orderId and status are required"
+      });
+    }
+
+    // Update order status
+    const updatedOrder = await Order.findByIdAndUpdate(
+      orderId,
+      { status },
+      { new: true } // returns updated doc
+    );
+
+    if (!updatedOrder) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found"
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Order status updated successfully",
+    });
+
+  } catch (error) {
+    console.error("Error updating order status:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error while updating order status"
+    });
+  }
+};
 
 
-module.exports = { signinAdmin, loginAdmin, restaurantRegister, addMenuItems, menuList, deleteMenuItem, updateMenuAvailability, getAllOrders };
+module.exports = { signinAdmin, loginAdmin, restaurantRegister, addMenuItems, menuList, deleteMenuItem, updateMenuAvailability, getAllOrders, updateOrderStatus };
