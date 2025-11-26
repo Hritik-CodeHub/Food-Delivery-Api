@@ -213,7 +213,7 @@ const homePageContent = async (req, res) => {
 
 const searchMenuByRestaurant = async (req, res) => {
   const restaurantName = req.params.restaurantName;
-
+  console.log(restaurantName);
 
   try {
     // Partial and case-insensitive search for restaurant
@@ -229,7 +229,7 @@ const searchMenuByRestaurant = async (req, res) => {
 
     // Group by category
     restaurant.menus.forEach((item) => {
-      const cat = item.catagory || "uncategorized";
+      const cat = item.category || "uncategorized";
       if (!groupedMenu[cat]) groupedMenu[cat] = [];
       groupedMenu[cat].push(item);
     });
@@ -432,6 +432,52 @@ const placeOrder = async (req, res) => {
 };
 
 
+// getOrderHistory for authenticated user /user/api/orders/history
+const getOrderHistory = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized: auth-token missing or invalid",
+      });
+    }
+
+    const orders = await Order.find({ userId }).populate("restaurant").sort({ createdAt: -1 });
+
+    const formatted = orders.map((order) => ({
+      orderId: order._id,
+      status: order.status,
+      amount: order.totalAmount,
+      method: order.paymentMethod,
+      placedAt: order.createdAt,
+      restaurantId: order.restaurant?._id,
+      restaurantName: order.restaurant?.restaurantName,
+      items: order.cartItems.map((item) => ({
+        name: item.name,
+        image: item.image,
+        price: item.price,
+        quantity: item.quantity,
+      })),
+    }));
+
+    return res.status(200).json({
+      success: true,
+      message: "Order history fetched successfully",
+      data: formatted,
+      totalOrders: formatted.length,
+    });
+  } catch (error) {
+    console.error("Error fetching order history:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error while fetching order history",
+    });
+  }
+};
+
+
 module.exports = {
   registerUser,
   loginUser,
@@ -443,4 +489,5 @@ module.exports = {
   addItems,
   decreaseItemQuantity,
   placeOrder,
+  getOrderHistory,
 }

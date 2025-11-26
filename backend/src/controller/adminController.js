@@ -56,48 +56,37 @@ const signinAdmin = async (req, res) => {
 
 //login a Admin using POST method /user/api/admin/login-admin
 const loginAdmin = async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
-    return res
-      .status(400)
-      .json({ message: "All fields are mendatory", success: false });
-  } else {
-    // checking for Admin exist or not
-    const userExist = await Admin.findOne({ email });
-    if (userExist) {
-      // comparing the user input password and data base password
-      const isCorrectPassword = await bcrypt.compare(
-        password,
-        userExist.password
-      );
-      if (isCorrectPassword) {
-        // returning a json web token to logined admin
-        const authToken = jwt.sign(userExist.id, process.env.SECRET);
-        const restaurant = await Restaurant.findOne({ adminId: userExist._id});
-        
-        const restaurantExists=restaurant?true:false;
-
-        return res.status(200).json({
-          message: "Admin login successfully",
-          success: true,
-          _id:userExist._id, 
-          name:userExist.name,
-          restaurantExists,
-          restaurantId:restaurant._id,
-          authToken,
-        });
-      } else {
-        console.log("Please enter with right credentials");
-        return res.status(400).json({
-          message: "Please enter with right credentials",
-          success: false,
-        });
-      }
-    } else {
-      return res
-        .status(404)
-        .json({ message: "User does not exist", success: false });
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ message: "All fields are mendatory", success: false });
     }
+
+    const admin = await Admin.findOne({ email: email.toLowerCase() });
+    if (!admin) {
+      return res.status(404).json({ message: "User does not exist", success: false });
+    }
+
+    const isCorrectPassword = await bcrypt.compare(password, admin.password);
+    if (!isCorrectPassword) {
+      return res.status(400).json({ message: "Please enter with right credentials", success: false });
+    }
+
+    const authToken = jwt.sign(admin.id, process.env.SECRET);
+    const restaurant = await Restaurant.findOne({ adminId: admin._id });
+    const restaurantExists = !!restaurant;
+
+    return res.status(200).json({
+      message: "Admin login successfully",
+      success: true,
+      _id: admin._id,
+      name: admin.name,
+      restaurantExists,
+      restaurantId: restaurant ? restaurant._id : null,
+      authToken,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Internal server error try again" });
   }
 };
 
@@ -107,7 +96,8 @@ const restaurantRegister = async (req, res) => {
   console.log(req.files)
 
 
-  const { adminId, restaurantName, city, country } = req.body;
+  const { restaurantName, city, country } = req.body;
+  const adminId = req.id || req.body.adminId;
   if (!adminId || !restaurantName || !city || !country) {
     return res
       .status(400)
@@ -116,7 +106,10 @@ const restaurantRegister = async (req, res) => {
 
   else {
     try {
-      const userExist = await Restaurant.findOne({ adminId });
+      if (!mongoose.Types.ObjectId.isValid(adminId)) {
+        return res.status(400).json({ message: "Invalid adminId", success: false });
+      }
+      const userExist = await Restaurant.findOne({ adminId: new mongoose.Types.ObjectId(adminId) });
       if (!userExist) {
         // Access files from multer
         const logoFile = req.files?.logoUrl?.[0];

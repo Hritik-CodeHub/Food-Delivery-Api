@@ -11,6 +11,7 @@ const {
     addItems,
     decreaseItemQuantity,
     placeOrder,
+    getOrderHistory,
 
 } = require('../controller/userController');
 
@@ -45,6 +46,9 @@ userRouter.post("/basket/items",addItems)
 userRouter.post("/basket/remove-items",decreaseItemQuantity)
 
 userRouter.post("/place-order",placeOrder)
+
+// Get order history for authenticated user
+userRouter.get("/orders/history/:id", getOrderHistory)
 
 
 module.exports = userRouter;

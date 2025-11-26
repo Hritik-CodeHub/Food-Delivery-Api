@@ -14,6 +14,7 @@ adminRouter.post("/login-admin", loginAdmin);
 
 adminRouter.post(
   "/restaurant/register",
+  authUser,
   upload.fields([
     { name: "logoUrl", maxCount: 1 },
     { name: "carouselImageUrl", maxCount: 1 },
