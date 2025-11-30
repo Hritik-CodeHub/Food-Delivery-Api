@@ -36,7 +36,7 @@ const signinAdmin = async (req, res) => {
           message: "New Admin created successfully",
           token,
           name,
-          id:create._id,
+          _id:create._id,
           success: true,
         });
       } catch (error) {
@@ -97,7 +97,8 @@ const restaurantRegister = async (req, res) => {
 
 
   const { restaurantName, city, country } = req.body;
-  const adminId = req.id || req.body.adminId;
+  const adminId =  req.body.adminId;
+  console.log(adminId)
   if (!adminId || !restaurantName || !city || !country) {
     return res
       .status(400)
@@ -221,6 +222,12 @@ const addMenuItems = async (req, res) => {
 const menuList = async (req, res) => {
   const { id } = req.params;
   try {
+    if(!id){
+      return res.status(400).json({
+        success:false,
+        message:"Restaurant id is required",
+      })
+    }
     const menuList = await Restaurant.findById(id)
      .populate("menus")
      .exec();

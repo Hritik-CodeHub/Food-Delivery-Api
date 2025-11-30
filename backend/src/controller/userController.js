@@ -168,7 +168,7 @@ const getMenuItems = async (req, res) => {
       query = {
         $or: [
           { name: { $regex: search, $options: "i" } },
-          { catagory: { $regex: search, $options: "i" } },
+          { category: { $regex: search, $options: "i" } },
         ],
       };
     }
